@@ -120,7 +120,7 @@ const (
 )
 
 func newEvent(name string, mask uint32) Event {
-	e := Event{Name: name}
+	e := Event{Name: name, RawOp: RawOp(mask)}
 	if mask&sysFSCREATE == sysFSCREATE || mask&sysFSMOVEDTO == sysFSMOVEDTO {
 		e.Op |= Create
 	}
