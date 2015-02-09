@@ -73,11 +73,11 @@ func (w *Watcher) Add(name string) error {
 		return errors.New("inotify instance already closed")
 	}
 
-	const agnosticEvents = syscall.IN_MOVED_TO | syscall.IN_MOVED_FROM |
-		syscall.IN_CREATE | syscall.IN_ATTRIB | syscall.IN_MODIFY |
-		syscall.IN_MOVE_SELF | syscall.IN_DELETE | syscall.IN_DELETE_SELF
+	//const agnosticEvents = syscall.IN_MOVED_TO | syscall.IN_MOVED_FROM |
+	//syscall.IN_CREATE | syscall.IN_ATTRIB | syscall.IN_MODIFY |
+	//syscall.IN_MOVE_SELF | syscall.IN_DELETE | syscall.IN_DELETE_SELF
 
-	var flags uint32 = agnosticEvents
+	var flags uint32 = syscall.IN_ALL_EVENTS
 
 	w.mu.Lock()
 	watchEntry, found := w.watches[name]
@@ -182,8 +182,9 @@ func (w *Watcher) readEvents() {
 				// The filename is padded with NULL bytes. TrimRight() gets rid of those.
 				name += "/" + strings.TrimRight(string(bytes[0:nameLen]), "\000")
 			}
+			cookie := uint32(raw.Cookie)
 
-			event := newEvent(name, mask)
+			event := newEvent(name, mask, cookie)
 
 			// Send the events that are not ignored on the events channel
 			if !event.ignoreLinux(mask) {
@@ -218,8 +219,8 @@ func (e *Event) ignoreLinux(mask uint32) bool {
 }
 
 // newEvent returns an platform-independent Event based on an inotify mask.
-func newEvent(name string, mask uint32) Event {
-	e := Event{Name: name}
+func newEvent(name string, mask uint32, cookie uint32) Event {
+	e := Event{Name: name, RawOp: RawOp(mask), EventID: cookie}
 	if mask&syscall.IN_CREATE == syscall.IN_CREATE || mask&syscall.IN_MOVED_TO == syscall.IN_MOVED_TO {
 		e.Op |= Create
 	}

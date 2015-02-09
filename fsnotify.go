@@ -14,11 +14,14 @@ import (
 
 // Event represents a single file system notification.
 type Event struct {
-	Name string // Relative path to the file or directory.
-	Op   Op     // File operation that triggered the event.
+	Name    string // Relative path to the file or directory.
+	Op      Op     // File operation that triggered the event.
+	RawOp   RawOp
+	EventID uint32
 }
 
 // Op describes a set of file operations.
+type RawOp uint32
 type Op uint32
 
 // These are the generalized file operations that can trigger a notification.
