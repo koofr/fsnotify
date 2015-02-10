@@ -19,14 +19,15 @@ import (
 
 // Watcher watches a set of files, delivering events to a channel.
 type Watcher struct {
-	Events   chan Event
-	Errors   chan error
-	isClosed bool           // Set to true when Close() is first called
-	mu       sync.Mutex     // Map access
-	port     syscall.Handle // Handle to completion port
-	watches  watchMap       // Map of watches (key: i-number)
-	input    chan *input    // Inputs to the reader are sent on this channel
-	quit     chan chan<- error
+	Events    chan Event
+	Errors    chan error
+	Recursive bool
+	isClosed  bool           // Set to true when Close() is first called
+	mu        sync.Mutex     // Map access
+	port      syscall.Handle // Handle to completion port
+	watches   watchMap       // Map of watches (key: i-number)
+	input     chan *input    // Inputs to the reader are sent on this channel
+	quit      chan chan<- error
 }
 
 // NewWatcher establishes a new watcher with the underlying OS and begins waiting for events.
@@ -348,7 +349,7 @@ func (w *Watcher) startRead(watch *watch) error {
 		return nil
 	}
 	e := syscall.ReadDirectoryChanges(watch.ino.handle, &watch.buf[0],
-		uint32(unsafe.Sizeof(watch.buf)), false, mask, nil, &watch.ov, 0)
+		uint32(unsafe.Sizeof(watch.buf)), w.Recursive, mask, nil, &watch.ov, 0)
 	if e != nil {
 		err := os.NewSyscallError("ReadDirectoryChanges", e)
 		if e == syscall.ERROR_ACCESS_DENIED && watch.mask&provisional == 0 {
