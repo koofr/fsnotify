@@ -69,6 +69,7 @@ func (w *Watcher) Add(name string) error {
 	if w.isClosed {
 		return errors.New("watcher already closed")
 	}
+
 	in := &input{
 		op:    opAddWatch,
 		path:  filepath.Clean(name),
@@ -529,12 +530,14 @@ func (w *Watcher) sendEvent(name string, mask uint64) bool {
 }
 
 func toWindowsFlags(mask uint64) uint32 {
+
 	var m uint32
 	if mask&sysFSACCESS != 0 {
 		m |= syscall.FILE_NOTIFY_CHANGE_LAST_ACCESS
 	}
 	if mask&sysFSMODIFY != 0 {
 		m |= syscall.FILE_NOTIFY_CHANGE_LAST_WRITE
+		m |= syscall.FILE_NOTIFY_CHANGE_SIZE
 	}
 	if mask&sysFSATTRIB != 0 {
 		m |= syscall.FILE_NOTIFY_CHANGE_ATTRIBUTES
