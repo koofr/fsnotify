@@ -69,10 +69,11 @@ func (w *Watcher) Add(name string) error {
 	if w.isClosed {
 		return errors.New("watcher already closed")
 	}
+
 	in := &input{
 		op:    opAddWatch,
 		path:  filepath.Clean(name),
-		flags: sys_FS_ALL_EVENTS,
+		flags: sys_FS_MODIFY | sys_FS_ATTRIB | sys_FS_MOVE | sys_FS_CREATE | sys_FS_DELETE | sys_FS_DELETE_SELF,
 		reply: make(chan error),
 	}
 	w.input <- in
@@ -529,12 +530,14 @@ func (w *Watcher) sendEvent(name string, mask uint64) bool {
 }
 
 func toWindowsFlags(mask uint64) uint32 {
+
 	var m uint32
 	if mask&sys_FS_ACCESS != 0 {
 		m |= syscall.FILE_NOTIFY_CHANGE_LAST_ACCESS
 	}
 	if mask&sys_FS_MODIFY != 0 {
 		m |= syscall.FILE_NOTIFY_CHANGE_LAST_WRITE
+		m |= syscall.FILE_NOTIFY_CHANGE_SIZE
 	}
 	if mask&sys_FS_ATTRIB != 0 {
 		m |= syscall.FILE_NOTIFY_CHANGE_ATTRIBUTES
